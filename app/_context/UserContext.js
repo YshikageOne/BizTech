@@ -4,8 +4,8 @@ const { createContext, useState, useContext} = require("react");
 const UserContext = createContext(null);
 
 const defaultUser = {
-    name : 'Im Tired',
-    email : 'tired@ineedsleep.com',
+    name : 'Clyde Kira',
+    email : 'insertemail@biztechs.com',
     role: 'Admin',
     status: 'Active',
     avatar: null //placeholder for profile pictures

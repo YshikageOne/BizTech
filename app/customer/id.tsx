@@ -1,104 +1,145 @@
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { db } from '../_config/firebase';
+import { useTheme } from '../_context/ThemeContext';
+import { ordersData } from './orders-data';
 
 const { width } = Dimensions.get('window');
 
-const customersData = [
-  {
-    id: 'ID-0001',
-    name: 'Tired Person #1',
-    email: 'tired1@ineedsomesleep.com',
-    phone: '+62 819 1314 1435',
-    purchases: '$69.42',
-    orderCount: 10,
-    address: '308 Negra Arroyo Lane, Albuquerque, New Mexico 87104',
-  },
-  {
-    id: 'ID-0002',
-    name: 'Tired Person #2',
-    email: 'tired2@ineedsomesleep.com',
-    phone: '+62 819 1314 1435',
-    purchases: '$420.69',
-    orderCount: 10,
-    address: '308 Negra Arroyo Lane, Albuquerque, New Mexico 87104',
-  },
-  {
-    id: 'ID-0003',
-    name: 'Tired Person #3',
-    email: 'tired3@ineedsomesleep.com',
-    phone: '+62 819 1314 1435',
-    purchases: '$1',
-    orderCount: 10,
-    address: '308 Negra Arroyo Lane, Albuquerque, New Mexico 87104',
-  },
-];
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  totalPurchases: string;
+  orderCount: number;
+  address: string;
+}
 
 export default function CustomerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const customer = customersData.find((c) => c.id === id);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
-  if (!customer) {
+  useEffect(() =>{
+    if (!id) return;
+
+    const unsubscribe = onSnapshot(doc(db, 'customers', id), snap => {
+      if (snap.exists()){
+        const data = snap.data() as any;
+        setCustomer({
+          id: snap.id,
+          ...data
+        });
+      }else{
+        setCustomer(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+    }, [id]);
+  
+  if (loading){
     return (
-      <SafeAreaView style = {styles.container} edges = {['top']}>
-        <Text style = {styles.notFound}>Customer not found</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges = {['top']}>
+        <View style = {{flex: 1, justifyContent: 'center', alignContent: 'center'}}>
+          <ActivityIndicator size = "large" color={colors.accent}/>
+        </View>
       </SafeAreaView>
     );
   }
 
+  if (!customer) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges = {['top']}>
+        <Text style = {[styles.notFound, { color: colors.text }]}>Customer not found</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const rawOrders = ordersData[customer.id] || [];
+  const computedTotal = rawOrders.reduce((sum, o) => sum + o.amount, 0).toFixed(2);
+  const computedCount = rawOrders.length;
+  const sorted = [...rawOrders].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const labels = sorted.map(o =>
+    new Date(o.date).toLocaleDateString('en-US', { month: 'short'})
+  );
+
+  const amount = sorted.map(o => o.amount);
+
+  const maxTicks = 6;
+  const step = Math.ceil(labels.length / maxTicks);
+  const filteredLabels = labels.filter((_, i) => i % step === 0);
+  const filteredAmounts = sorted
+    .filter((_,i) => i % step === 0)
+    .map(o => o.amount);
+
   return (
-    <SafeAreaView style = {styles.container} edges = {['top']}>
+    <SafeAreaView style = {[styles.container, { backgroundColor: colors.background }]} edges = {['top']}>
       <TouchableOpacity
         onPress={() => router.push({ pathname: '/customer' })}
         style = {styles.backButton}
       >
-        <Feather name="arrow-left" size={24} color="#fff" />
+        <Feather name="arrow-left" size={24} color={colors.text} />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={{ paddingTop: 8 }}>
-        <Text style={styles.name}>{customer.name}</Text>
-        <Text style={styles.label}>
-          Email: <Text style={styles.value}>{customer.email}</Text>
+        <Text style={[styles.name, { color: colors.text }]}>{customer.name}</Text>
+        <Text style={[styles.label, { color: colors.subText }]}>
+          Email: <Text style={[styles.value, { color: colors.text }]}>{customer.email}</Text>
         </Text>
-        <Text style={styles.label}>
-          Phone: <Text style={styles.value}>{customer.phone}</Text>
+        <Text style={[styles.label, { color: colors.subText }]}>
+          Phone: <Text style={[styles.value, { color: colors.text }]}>{customer.phone}</Text>
         </Text>
-        <Text style={styles.label}>
-          Purchases: <Text style={styles.value}>{customer.purchases}</Text>
+        <Text style={[styles.label, { color: colors.subText }]}>
+          Total Purchases: {' '}
+          <Text style = {[styles.value, { color: colors.text }]}>
+            ${computedTotal}
+            </Text>
         </Text>
-        <Text style={styles.label}>
-          Orders: <Text style={styles.value}>{customer.orderCount}</Text>
+        <Text style={[styles.label, { color: colors.subText }]}>
+          Orders: <Text style={[styles.value, { color: colors.text }]}>{customer.orderCount}</Text>
         </Text>
-        <Text style={styles.label}>
-          Address: <Text style={styles.value}>{customer.address}</Text>
+        <Text style={[styles.label, { color: colors.subText }]}>
+          Address: <Text style={[styles.value, { color: colors.text }]}>{customer.address}</Text>
         </Text>
 
-        <Text style={styles.chartTitle}>Purchases Over Time</Text>
-        <LineChart
+        <Text style={[styles.chartTitle, {color: colors.text}]}>Purchases Over Time</Text>
+        <View style = {[styles.chartContainer, {backgroundColor: colors.text}]}>
+          <LineChart
           data={{
-            labels: ['Jan','Feb','Mar','Apr','May','Jun'],
-            datasets: [{ data: [20,45,28,80,99,43], strokeWidth: 2 }],
+            labels: filteredLabels,
+            datasets: [{ data: filteredAmounts, strokeWidth: 2 }],
           }}
           width={width - 32}
           height={220}
           chartConfig={{
-            backgroundColor: '#121212',
-            backgroundGradientFrom: '#121212',
-            backgroundGradientTo: '#1E1E1E',
+            backgroundColor: colors.background,
+            backgroundGradientFrom: colors.background,
+            backgroundGradientTo: colors.card,
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(61,139,253,${opacity})`,
-            labelColor: () => '#fff',
+            color: () => colors.accent,
+            labelColor: () => colors.subText,
           }}
-          style={styles.chart}
         />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -107,33 +148,29 @@ export default function CustomerDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
   },
   backButton: {
-    padding: 12,
-    //adjust positioning if overlayed:
-    //position: 'absolute',
-    //top: 0, left: 0, zIndex: 10
+    padding: 12
   },
   name: {
-    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
     marginHorizontal: 16,
     marginBottom: 16,
   },
   label: {
-    color: '#8A8A8A',
     fontSize: 14,
     marginHorizontal: 16,
     marginTop: 8,
   },
   value: {
-    color: '#fff',
     fontWeight: 'bold',
   },
+  chartContainer: {  
+    marginHorizontal: 16,
+    borderRadius: 8,
+  },
   chartTitle: {
-    color: '#fff',
     fontSize: 18,
     marginTop: 24,
     marginHorizontal: 16,
@@ -144,7 +181,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   notFound: {
-    color: '#fff',
     padding: 16,
   },
 });

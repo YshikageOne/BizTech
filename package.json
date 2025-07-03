@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "generate:orders": "node scripts/gen-orders-manifest.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -30,6 +31,7 @@
     "expo-symbols": "~0.4.4",
     "expo-system-ui": "~5.0.7",
     "expo-web-browser": "~14.1.6",
+    "firebase": "^11.10.0",
     "lodash": "^4.17.21",
     "moti": "^0.30.0",
     "react": "19.0.0",

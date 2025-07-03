@@ -15,7 +15,7 @@
     "assets/**/*",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ],
+, "scripts"  ],
   "exclude": [
     "node_modules",
     "dist"
