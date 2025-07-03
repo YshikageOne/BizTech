@@ -1,15 +1,25 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { MotiView } from 'moti';
+import { MotiPressable } from 'moti/interactions';
 import { useState } from 'react';
 import {
   FlatList,
+  LayoutAnimation,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  UIManager,
+  View
 } from 'react-native';
 import { useUser } from '../context/UserContext';
+
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 
 const customersList = [
   {
@@ -50,6 +60,8 @@ export default function CustomerListScreen() {
   const { user } = useUser();
 
   const toggleExpand = (id: string) => {
+    //animate height/position changes
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCustomers((prev) =>
       prev.map((cust) =>
         cust.id === id ? { ...cust, expanded: !cust.expanded } : cust
@@ -64,7 +76,13 @@ export default function CustomerListScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <MotiView
+          from={{ opacity: 0, translateY: 10 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 300 }}
+          style = {{flex: 1}}
+    >
+      <View style={styles.container}>
       <Text style={styles.title}>Customer List</Text>
 
       <View style={styles.searchContainer}>
@@ -94,18 +112,24 @@ export default function CustomerListScreen() {
                 <Text style={styles.detail}>Purchases: {item.purchases}</Text>
                 <Text style={styles.detail}>Orders: {item.orderCount}</Text>
                 <Text style={styles.detail}>Address: {item.address}</Text>
-                <TouchableOpacity
+                
+                <MotiPressable
+                  from = {{scale: 1}}
+                  animate={({hovered, pressed}) => ({
+                    scale: pressed ? 0.95 : hovered ? 1.05 : 1
+                  })}
+                  transition={{type: 'spring', stiffness: 300, damping: 15}}
                   onPress={() =>
                     router.push({
                       pathname: '/customer/id',
-                      params: { id: item.id },
+                      params: { id: item.id }
                     })
                   }
-                  style={styles.viewButton}
+                  style = {styles.viewButton}
                 >
-                  <Feather name="eye" size={16} color="#3D8BFD" />
-                  <Text style={styles.viewButtonText}>View Details</Text>
-                </TouchableOpacity>
+                  <Feather name = "eye" size = {16} color = "#3D8BFD" />
+                  <Text style = {styles.viewButtonText}>View Details</Text>
+                </MotiPressable>
               </View>
             )}
           </View>
@@ -127,6 +151,7 @@ export default function CustomerListScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    </MotiView>
   );
 }
 
