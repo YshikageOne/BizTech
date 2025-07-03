@@ -5,6 +5,7 @@ import { MotiView } from 'moti';
 import { LogBox } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../_context/ThemeContext';
+import { UserProvider } from '../_context/UserContext';
 
 //this error has been killing me...:(
 LogBox.ignoreLogs([
@@ -14,8 +15,10 @@ LogBox.ignoreLogs([
 export default function Layout() {
   return (
     <SafeAreaProvider>
-          <ThemedStatusBar />
-          <LayoutContent />
+      <UserProvider>            
+        <ThemedStatusBar />
+        <LayoutContent />
+      </UserProvider>
     </SafeAreaProvider>
   );
 }

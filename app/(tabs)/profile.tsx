@@ -1,111 +1,151 @@
 import { MotiView } from 'moti';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../_context/ThemeContext';
 import { useUser } from '../_context/UserContext';
 
 export default function ProfileScreen() {
-  const { user } = useUser();
-  const { mode, toggleMode } = useTheme();
+  const { profile, initializing, signOutUser, user } = useUser();
+  const { mode, toggleMode, colors } = useTheme();
   const isDark = mode === 'dark';
 
-  const bg = isDark ? '#121212' : '#fff';
-  const cardBg = isDark ? '#1E1E1E' : '#f2f2f2';
-  const text = isDark ? '#fff' : '#000';
-  const subText = isDark ? '#8A8A8A' : '#555';
+  if (initializing) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (!profile && !user) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.subText }}>No profile found.</Text>
+      </View>
+    );
+  }
+
+  // Debug logs
+  console.log('=== Profile Screen Debug ===');
+  console.log('initializing:', initializing);
+  console.log('profile:', profile);
+  console.log('user:', user);
+  console.log('user email:', user?.email);
+  
+  if (!profile && !user) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.subText }}>No profile found.</Text>
+      </View>
+    );
+  }
+
+  const name = profile?.name || user?.email?.split('@')[0] || 'User';
+  const status = profile?.status || 'Active';
+  
+  console.log('profile.name:', profile?.name);
+  console.log('final displayName:', name);
+  console.log('final status:', status);
+
+
+  const avatarLetter = name.charAt(0).toUpperCase();
 
   return (
-    <MotiView
-          from={{ opacity: 0, translateY: 10 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 300 }}
-          style = {{flex: 1}}
+    <MotiView 
+      from={{ opacity: 0, translateY: 20 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 300 }}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <View style={[styles.container, { backgroundColor: bg }]}>
-      <View style={[styles.profileSection, { backgroundColor: bg }]}>
-        <View style={[styles.avatar, { backgroundColor: cardBg }]}>
-          <Text style={[styles.avatarText, { color: text }]}>{user?.name?.charAt(0) || 'U'}</Text>
+      <View style={styles.profileSection}>
+        <View style={[styles.avatar, { backgroundColor: colors.subText }]}>
+          <Text style={[styles.avatarText, { color: colors.background }]}>{avatarLetter}</Text>
         </View>
-        <Text style={[styles.name, { color: text }]}>{user?.name || 'Unnamed User'}</Text>
-        <Text style={[styles.status, { color: subText }]}>Status: Active</Text>
-        <Text style={[styles.email, { color: subText }]}>Email: {user?.email || 'not set'}</Text>
+        
+        <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+        
+        <Text style={[styles.status, { color: colors.subText }]}>Status: {status}</Text>
+        
+        {user?.email && (
+          <Text style={[styles.email, { color: colors.subText }]}>Email: {user.email}</Text>
+        )}
       </View>
-      
+
       <View style={styles.settingsSection}>
-        <Text style={[styles.sectionTitle, { color: text }]}>Settings</Text>
-
-        <View style={[styles.settingItem, { backgroundColor: cardBg }]}>
-          <Text style={[styles.settingText, { color: text }]}>Dark Mode</Text>
-
+        <View style={styles.row}>
+          <Text style={[styles.label, { color: colors.text }]}>Dark Mode</Text>
           <Switch
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={isDark ? '#3D8BFD' : '#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={toggleMode}
-              value={isDark}
-            />
+            value={isDark}
+            onValueChange={toggleMode}
+            trackColor={{ true: colors.accent, false: colors.border }}
+            thumbColor={isDark ? colors.background : colors.accent}
+          />
         </View>
 
-        <View style={[styles.settingItem, { backgroundColor: cardBg }]}>
-          <Text style={[styles.settingText, { color: text }]}>Logout</Text>
-        </View>
+        <TouchableOpacity 
+          onPress={signOutUser} 
+          style={[styles.signOut, { borderColor: colors.border }]}
+        >
+          <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>Sign Out</Text>
+        </TouchableOpacity>
       </View>
-    </View>
-
-    </MotiView>  
+    </MotiView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
+  container: { 
+    flex: 1, 
+    padding: 16 
   },
   profileSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 24,
+    marginTop: 60,
+    marginBottom: 40
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
+  avatar: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 40, 
     justifyContent: 'center',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16
   },
   avatarText: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
-  name: {
-    fontSize: 22,
+  name: { 
+    fontSize: 24, 
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  status: {
-    fontSize: 14,
     marginBottom: 8,
+    textAlign: 'center'
   },
-  email: {
+  status: { 
+    fontSize: 14, 
+    marginBottom: 4,
+    textAlign: 'center'
+  },
+  email: { 
     fontSize: 14,
+    textAlign: 'center'
   },
   settingsSection: {
-    marginTop: 24,
+    marginTop: 20
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  row: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginVertical: 12 
   },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
+  label: { 
+    fontSize: 16 
   },
-  settingText: {
-    fontSize: 16,
-  },
+  signOut: { 
+    marginTop: 32, 
+    padding: 12, 
+    borderWidth: 1, 
+    borderRadius: 6, 
+    alignItems: 'center' 
+  }
 });

@@ -7,7 +7,7 @@ import { useTheme } from '../_context/ThemeContext';
 import { useUser } from '../_context/UserContext';
 
 export default function DashboardScreen() {
-  const { user } = useUser();
+  const { user, profile } = useUser(); 
   const { colors } = useTheme();
 
   const [totalOrders, setTotalOrders] = useState(0);
@@ -29,6 +29,8 @@ export default function DashboardScreen() {
     return () => unsubscribe();
   }, []);
 
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'User';
+
   return (
     <MotiView
       from={{ opacity: 0, translateY: 10 }}
@@ -42,7 +44,7 @@ export default function DashboardScreen() {
         </Text>
         
       <Text style={{ color: colors.subText, fontSize: 16, marginBottom: 16 }}>
-          Welcome, {user?.name} 👋
+          Welcome, {displayName} 👋
         </Text>
 
       <View style={{
@@ -73,50 +75,3 @@ export default function DashboardScreen() {
     
   );
 }
-
-/*
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212', padding: 16 },
-  pageTitle: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  welcome: {
-    color: '#aaa',
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: '#1E1E1E',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  cardLabel: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  cardValue: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 4,
-  },
-  nav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    backgroundColor: '#1E1E1E',
-    marginTop: 16,
-  },
-  navLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-}); */
